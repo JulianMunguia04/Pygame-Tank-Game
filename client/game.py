@@ -1,5 +1,6 @@
 import pygame
 import pickle
+import math
 from network import client
 
 pygame.init()
@@ -42,9 +43,29 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+
     # Move circle
-    BLUE_X += 1
-    BLUE_Y += 1
+    # Compute direction vector
+    dx = mouse_x - BLUE_X
+    dy = mouse_y - BLUE_Y
+
+    # Compute distance (so we can normalize)
+    distance = math.hypot(dx, dy)
+
+    # Only move if we're not already exactly on the mouse
+    if distance > 1:
+        # Normalize (make vector length = 1)
+        dx /= distance
+        dy /= distance
+
+        # Move toward mouse
+        BLUE_X += dx * 3
+        BLUE_Y += dy * 3
+
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_a]:
+        print("Holding A")
 
     # Draw everything
     screen.fill((0, 0, 0))
