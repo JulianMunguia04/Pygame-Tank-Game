@@ -18,6 +18,14 @@ BLUE_X = 400
 BLUE_Y = 300
 ANGLE = 0
 
+TANK_X = 200
+TANK_Y = 100
+
+TANK_HEAD = pygame.image.load("assets/images/tank-head.png")
+TANK_HEAD_WIDTH, TANK_HEAD_HEIGHT = TANK_HEAD.get_size()
+TANK_BODY = pygame.image.load("assets/images/tank-body.png")
+TANK_WIDTH, TANK_HEIGHT = TANK_BODY.get_size()
+
 # Fonts
 font = pygame.font.SysFont("Arial", 36)
 clock = pygame.time.Clock()
@@ -84,7 +92,7 @@ while running:
     ]
 
     # --- DRAW EVERYTHING ---
-    screen.fill((0, 0, 0))
+    screen.fill((255, 255, 255))
     pygame.draw.circle(screen, BLUE, (int(BLUE_X), int(BLUE_Y)), 50)
 
     # Facing line
@@ -99,6 +107,15 @@ while running:
 
     text_surface2 = font.render("WASD to move, Left Click to shoot", True, (255, 0, 0))
     screen.blit(text_surface2, (80, 50))
+
+    #Draw Tank
+    TANK_BODY_RECT = TANK_BODY.get_rect(center=(TANK_X, TANK_Y))
+    screen.blit(TANK_BODY, TANK_BODY_RECT)
+
+    # Rotate and draw tank head centered on body
+    TANK_HEAD_ROTATED = pygame.transform.rotate(TANK_HEAD, ANGLE)
+    TANK_HEAD_RECT = TANK_HEAD_ROTATED.get_rect(center=TANK_BODY_RECT.center)
+    screen.blit(TANK_HEAD_ROTATED, TANK_HEAD_RECT)
 
     pygame.display.update()
     clock.tick(FPS)
