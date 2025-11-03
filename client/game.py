@@ -5,34 +5,33 @@ from network import client
 
 pygame.init()
 screen = pygame.display.set_mode((800, 600))
-pygame.display.set_caption("My First Game")
+pygame.display.set_caption("Tank Controller")
 
 # Constants
-BLUE = (0, 0, 255)
-BULLET_COLOR = (255, 255, 0)
 FPS = 60
 SPEED = 3
 ROT_SPEED = 3
 BULLET_SPEED = 8
-BLUE_X = 400
-BLUE_Y = 300
-ANGLE = 0
+BULLET_COLOR = (255, 255, 0)
 
-TANK_X = 200
-TANK_Y = 100
+# Tank
+TANK_X = 400
+TANK_Y = 300
+TANK_ANGLE = 0  # rotation of body
+TURRET_ANGLE = 0  # rotation of head (follows mouse)
 
-TANK_HEAD = pygame.image.load("assets/images/tank-head.png")
-TANK_HEAD_WIDTH, TANK_HEAD_HEIGHT = TANK_HEAD.get_size()
-TANK_BODY = pygame.image.load("assets/images/tank-body.png")
-TANK_WIDTH, TANK_HEIGHT = TANK_BODY.get_size()
+# Load images
+TANK_BODY = pygame.image.load("assets/images/tank-body.png").convert_alpha()
+TANK_HEAD = pygame.image.load("assets/images/tank-head.png").convert_alpha()
+TANK_HEAD = pygame.transform.flip(TANK_HEAD, True, False)
 
-# Fonts
-font = pygame.font.SysFont("Arial", 36)
+# Fonts and clock
+font = pygame.font.SysFont("Arial", 24)
 clock = pygame.time.Clock()
 
 bullets = []
 
-# Server check (optional, unchanged)
+# Optional server check
 SERVER_MESSAGE = {"message": "server-check"}
 try:
     client.send(pickle.dumps(SERVER_MESSAGE))
@@ -50,35 +49,38 @@ finally:
 # ------------------------
 running = True
 while running:
-    # --- HANDLE EVENTS ---
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-        # Handle single-shot left click
+        # Shoot bullet
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            # Spawn bullet slightly in front of circle
-            rad = math.radians(ANGLE)
-            offset = 50  # how far from center bullet spawns
-            bullet_x = BLUE_X + math.cos(rad) * offset
-            bullet_y = BLUE_Y - math.sin(rad) * offset
-            bullets.append({"x": bullet_x, "y": bullet_y, "angle": ANGLE})
+            rad = math.radians(TURRET_ANGLE)
+            offset = 225
+            bullet_x = TANK_X + math.cos(rad) * offset
+            bullet_y = TANK_Y - math.sin(rad) * offset
+            bullets.append({"x": bullet_x, "y": bullet_y, "angle": TURRET_ANGLE})
 
-    # --- HANDLE KEYBOARD INPUT (separate from events) ---
+    # --- HANDLE INPUT ---
     keys = pygame.key.get_pressed()
-
     if keys[pygame.K_a]:
-        ANGLE += ROT_SPEED
+        TANK_ANGLE += ROT_SPEED
     if keys[pygame.K_d]:
-        ANGLE -= ROT_SPEED
+        TANK_ANGLE -= ROT_SPEED
 
-    rad = math.radians(ANGLE)
+    rad = math.radians(TANK_ANGLE)
     if keys[pygame.K_w]:
-        BLUE_X += math.cos(rad) * SPEED
-        BLUE_Y -= math.sin(rad) * SPEED
+        TANK_X += math.cos(rad) * SPEED
+        TANK_Y -= math.sin(rad) * SPEED
     if keys[pygame.K_s]:
-        BLUE_X -= math.cos(rad) * SPEED
-        BLUE_Y += math.sin(rad) * SPEED
+        TANK_X -= math.cos(rad) * SPEED
+        TANK_Y += math.sin(rad) * SPEED
+
+    # --- UPDATE TURRET ANGLE (toward mouse) ---
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    dx = mouse_x - TANK_X
+    dy = TANK_Y - mouse_y  # y inverted because screen y increases downward
+    TURRET_ANGLE = math.degrees(math.atan2(dy, dx))
 
     # --- UPDATE BULLETS ---
     for bullet in bullets:
@@ -93,29 +95,24 @@ while running:
 
     # --- DRAW EVERYTHING ---
     screen.fill((255, 255, 255))
-    pygame.draw.circle(screen, BLUE, (int(BLUE_X), int(BLUE_Y)), 50)
 
-    # Facing line
-    line_length = 70
-    end_x = BLUE_X + math.cos(rad) * line_length
-    end_y = BLUE_Y - math.sin(rad) * line_length
-    pygame.draw.line(screen, (255, 255, 255), (BLUE_X, BLUE_Y), (end_x, end_y), 3)
+    # Draw tank body
+    body_rot = pygame.transform.rotate(TANK_BODY, TANK_ANGLE)
+    body_rect = body_rot.get_rect(center=(TANK_X, TANK_Y))
+    screen.blit(body_rot, body_rect)
+
+    # Draw turret
+    turret_rot = pygame.transform.rotate(TANK_HEAD, TURRET_ANGLE)
+    turret_rect = turret_rot.get_rect(center=(TANK_X, TANK_Y))
+    screen.blit(turret_rot, turret_rect)
 
     # Draw bullets
     for bullet in bullets:
-        pygame.draw.circle(screen, BULLET_COLOR, (int(bullet["x"]), int(bullet["y"])), 8)
+        pygame.draw.circle(screen, BULLET_COLOR, (int(bullet["x"]), int(bullet["y"])), 6)
 
-    text_surface2 = font.render("WASD to move, Left Click to shoot", True, (255, 0, 0))
-    screen.blit(text_surface2, (80, 50))
-
-    #Draw Tank
-    TANK_BODY_RECT = TANK_BODY.get_rect(center=(TANK_X, TANK_Y))
-    screen.blit(TANK_BODY, TANK_BODY_RECT)
-
-    # Rotate and draw tank head centered on body
-    TANK_HEAD_ROTATED = pygame.transform.rotate(TANK_HEAD, ANGLE)
-    TANK_HEAD_RECT = TANK_HEAD_ROTATED.get_rect(center=TANK_BODY_RECT.center)
-    screen.blit(TANK_HEAD_ROTATED, TANK_HEAD_RECT)
+    # Instruction text
+    text_surface = font.render("W/S move, A/D rotate body, Mouse aims, LMB fires", True, (255, 0, 0))
+    screen.blit(text_surface, (50, 50))
 
     pygame.display.update()
     clock.tick(FPS)
