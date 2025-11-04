@@ -14,6 +14,12 @@ ROT_SPEED = 3
 BULLET_SPEED = 8
 BULLET_COLOR = (255, 255, 0)
 
+# --- NEW: Target setup ---
+TARGET_X = 100
+TARGET_Y = 100
+TARGET_RADIUS = 40
+TARGET_COLOR = (255, 0, 0)
+
 # Tank
 TANK_X = 400
 TANK_Y = 300
@@ -93,8 +99,21 @@ while running:
         if 0 <= b["x"] <= 800 and 0 <= b["y"] <= 600
     ]
 
+     #Check bullet collisions with target
+    for bullet in bullets:
+        dx = bullet["x"] - TARGET_X
+        dy = bullet["y"] - TARGET_Y
+        distance = math.hypot(dx, dy)
+        if distance < TARGET_RADIUS + 6:
+            print("💥 Target hit!")
+            bullets.remove(bullet)
+            break
+
     # --- DRAW EVERYTHING ---
     screen.fill((255, 255, 255))
+
+    #Draw Target
+    pygame.draw.circle(screen, TARGET_COLOR, (TARGET_X, TARGET_Y), TARGET_RADIUS)
 
     # Draw tank body
     body_rot = pygame.transform.rotate(TANK_BODY, TANK_ANGLE)
