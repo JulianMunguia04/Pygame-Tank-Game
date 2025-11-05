@@ -3,8 +3,11 @@ import math
 import pickle
 from network import client
 
+WIDTH = 800
+HEIGHT = 600
+
 pygame.init()
-screen = pygame.display.set_mode((800, 600))
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Tank Controller")
 
 # Constants
@@ -76,11 +79,16 @@ while running:
 
     rad = math.radians(TANK_ANGLE)
     if keys[pygame.K_w]:
-        TANK_X += math.cos(rad) * SPEED
-        TANK_Y -= math.sin(rad) * SPEED
+        new_x = TANK_X + math.cos(rad) * SPEED
+        new_y = TANK_Y - math.sin(rad) * SPEED
+        if 0 < new_x < WIDTH and 0 < new_y < HEIGHT:
+            TANK_X, TANK_Y = new_x, new_y
+
     if keys[pygame.K_s]:
-        TANK_X -= math.cos(rad) * SPEED
-        TANK_Y += math.sin(rad) * SPEED
+        new_x = TANK_X - math.cos(rad) * SPEED
+        new_y = TANK_Y + math.sin(rad) * SPEED
+        if 0 < new_x < WIDTH and 0 < new_y < HEIGHT:
+            TANK_X, TANK_Y = new_x, new_y
 
     # --- UPDATE TURRET ANGLE (toward mouse) ---
     mouse_x, mouse_y = pygame.mouse.get_pos()
